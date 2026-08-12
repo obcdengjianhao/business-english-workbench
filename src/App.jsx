@@ -112,17 +112,6 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>商务英语词汇工作台</h1>
-        <nav className="app-nav">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={activeTab === tab.key ? 'active' : ''}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
       </header>
 
       <main className="app-main">
@@ -153,6 +142,18 @@ export default function App() {
           />
         )}
       </main>
+
+      <nav className="app-nav bottom-nav">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className={activeTab === tab.key ? 'active' : ''}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
