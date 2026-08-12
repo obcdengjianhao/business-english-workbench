@@ -379,7 +379,7 @@ function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords 
         </ul>
       </section>
 
-      <StatsView progress={progress} totalWords={allWords.length} />
+      <StatsView progress={progress} totalWords={allWords.length} allWords={allWords} />
     </div>
   );
 }

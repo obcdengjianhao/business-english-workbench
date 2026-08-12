@@ -36,13 +36,17 @@ body {
 .app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px 16px 96px;
+  padding: 12px 12px 120px;
   transition: background 0.3s, color 0.3s;
+}
+
+.app-main {
+  padding-bottom: 24px;
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   position: relative;
 }
 
@@ -101,7 +105,7 @@ body {
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  padding: 20px;
+  padding: 16px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -127,6 +131,10 @@ body {
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   z-index: 100;
+}
+
+.dark .bottom-nav {
+  background: rgba(15, 23, 42, 0.92);
 }
 
 .bottom-nav button {
@@ -193,7 +201,7 @@ body {
 .quick-actions,
 .tips,
 .learning-path {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .learning-path .path-steps {
@@ -206,7 +214,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -285,14 +293,14 @@ body {
 .learning-path h2,
 .stats-view h2 {
   font-size: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 700;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .actions button,
@@ -373,8 +381,8 @@ body {
 .card {
   width: 100%;
   max-width: 420px;
-  height: 260px;
-  margin: 0 auto 16px;
+  height: 220px;
+  margin: 0 auto 12px;
   perspective: 1000px;
   cursor: pointer;
 }
@@ -494,8 +502,8 @@ body {
 .card-actions {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 
@@ -511,7 +519,7 @@ body {
 .rating {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -549,8 +557,8 @@ body {
 /* Notebook */
 .add-word form {
   display: grid;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .add-word input {
@@ -581,7 +589,7 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
@@ -650,7 +658,7 @@ body {
 
 .empty-state {
   text-align: center;
-  padding: 40px 20px;
+  padding: 24px 16px;
   color: var(--text-muted);
 }
 
@@ -661,14 +669,14 @@ body {
 
 /* Word List */
 .word-list-view h2 {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .list-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .list-filters button {
@@ -691,8 +699,8 @@ body {
 .list-controls {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .list-controls input,
@@ -719,7 +727,7 @@ body {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
@@ -810,15 +818,15 @@ body {
 }
 
 .setting-section {
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
 }
 
 .setting-section h3 {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-size: 16px;
 }
 
@@ -826,7 +834,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   font-size: 14px;
   cursor: pointer;
 }
@@ -909,8 +917,8 @@ body {
 .data-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .data-actions button,
@@ -969,17 +977,17 @@ body {
 }
 
 .stats-view {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .stats-view h3 {
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--text);
 }
 
 .chart-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .bar-chart {
@@ -991,7 +999,7 @@ body {
 
 .dist-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dist-item {
@@ -1040,23 +1048,24 @@ body {
 
 @media (max-width: 600px) {
   .app {
-    padding: 16px;
+    padding: 12px 12px 80px;
   }
 
   .app-main {
-    padding: 16px;
+    padding: 14px;
   }
 
   .card {
-    height: 240px;
+    height: 200px;
   }
 
   .card h2 {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .rating button {
-    min-width: 100px;
+    min-width: 70px;
+    padding: 8px 6px;
   }
 
   .theme-toggle {
