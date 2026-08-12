@@ -2,6 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { defaultVocabulary } from './data/vocabulary';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getNextReviewDate, isDueForReview } from './utils/ebinhause';
+import { WordListView } from './components/WordListView';
+import { DataManager } from './components/DataManager';
+import { ThemeToggle } from './components/ThemeToggle';
 import './index.css';
 
 const TABS = [
@@ -10,6 +13,7 @@ const TABS = [
   { key: 'notebook', label: '单词本' },
   { key: 'review', label: '复习' },
   { key: 'list', label: '列表' },
+  { key: 'settings', label: '设置' },
 ];
 
 function formatDate(iso) {
@@ -32,6 +36,11 @@ export default function App() {
   const [notebook, setNotebook] = useLocalStorage('bew_notebook', []);
   const [customWords, setCustomWords] = useLocalStorage('bew_custom_words', []);
   const [listFilter, setListFilter] = useLocalStorage('bew_list_filter', 'all');
+  const [darkMode, setDarkMode] = useLocalStorage('bew_dark_mode', false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   const allWords = useMemo(() => {
     const base = [...defaultVocabulary];
@@ -124,10 +133,25 @@ export default function App() {
     form.reset();
   };
 
+  const importData = (data) => {
+    if (data.progress) setProgress(data.progress);
+    if (data.notebook) setNotebook(data.notebook);
+    if (data.customWords) setCustomWords(data.customWords);
+  };
+
+  const clearData = () => {
+    if (window.confirm('确定要清空所有学习数据吗？此操作不可恢复。')) {
+      setProgress({});
+      setNotebook([]);
+      setCustomWords([]);
+    }
+  };
+
   return (
-    <div className="app">
+    <div className={`app ${darkMode ? 'dark' : ''}`}>
       <header className="app-header">
         <h1>商务英语词汇工作台</h1>
+        <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
       </header>
 
       <main className="app-main">
@@ -168,9 +192,19 @@ export default function App() {
             learnedWords={learnedWords}
             masteredWords={masteredWords}
             dueToday={dueToday}
+            progress={progress}
             listFilter={listFilter}
             setListFilter={setListFilter}
             onAddToNotebook={addToNotebook}
+          />
+        )}
+        {activeTab === 'settings' && (
+          <SettingsView
+            progress={progress}
+            notebook={notebook}
+            customWords={customWords}
+            onImport={importData}
+            onClear={clearData}
           />
         )}
       </main>
@@ -243,17 +277,25 @@ function Dashboard({ stats, dueToday, setTab, setListFilter }) {
 function LearnView({ words, progress, onLearned, onAddToNotebook }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   const unlearned = useMemo(
     () => words.filter((w) => !progress[w.word]?.learnedAt),
     [words, progress]
   );
 
-  if (unlearned.length === 0) {
+  const learnedCount = words.length - unlearned.length;
+  const progressPercent = Math.round((learnedCount / words.length) * 100);
+
+  if (unlearned.length === 0 || showSummary) {
     return (
       <div className="empty-state">
         <h2>太棒了！</h2>
         <p>你已经学完了所有内置单词，去「单词本」添加更多吧。</p>
+        <p className="progress-text">
+          学习进度：{learnedCount}/{words.length} ({progressPercent}%)
+        </p>
+        <button onClick={() => setShowSummary(false)}>继续学习</button>
       </div>
     );
   }
@@ -265,16 +307,21 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
     setIndex((i) => (i + 1) % unlearned.length);
   };
 
+  const handleSkip = () => {
+    setFlipped(false);
+    setIndex((i) => (i + 1) % unlearned.length);
+  };
+
   return (
     <div className="learn-view">
       <div className="progress-bar">
         <div
           className="progress-fill"
-          style={{ width: `${((words.length - unlearned.length) / words.length) * 100}%` }}
+          style={{ width: `${(learnedCount / words.length) * 100}%` }}
         />
       </div>
       <p className="progress-text">
-        剩余未学：{unlearned.length} / {words.length}
+        学习进度：{learnedCount}/{words.length} ({progressPercent}%) · 剩余未学：{unlearned.length}
       </p>
 
       <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
@@ -300,6 +347,7 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
       <div className="card-actions">
         <button onClick={() => speak(current.word)}>🔊 发音</button>
         <button onClick={() => onAddToNotebook(current)}>⭐ 加入单词本</button>
+        <button onClick={handleSkip}>⏭ 跳过</button>
       </div>
 
       <div className="rating">
@@ -323,70 +371,6 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
           掌握
         </button>
       </div>
-    </div>
-  );
-}
-
-function WordListView({
-  allWords,
-  learnedWords,
-  masteredWords,
-  dueToday,
-  listFilter,
-  setListFilter,
-  onAddToNotebook,
-}) {
-  const words = useMemo(() => {
-    switch (listFilter) {
-      case 'learned':
-        return learnedWords;
-      case 'mastered':
-        return masteredWords;
-      case 'due':
-        return dueToday;
-      default:
-        return allWords;
-    }
-  }, [allWords, learnedWords, masteredWords, dueToday, listFilter]);
-
-  const titles = {
-    all: '全部单词',
-    learned: '已学习单词',
-    mastered: '已掌握单词',
-    due: '今日待复习',
-  };
-
-  return (
-    <div className="word-list-view">
-      <h2>{titles[listFilter] || '单词列表'}</h2>
-      <div className="list-filters">
-        <button className={listFilter === 'all' ? 'active' : ''} onClick={() => setListFilter('all')}>
-          全部
-        </button>
-        <button className={listFilter === 'learned' ? 'active' : ''} onClick={() => setListFilter('learned')}>
-          已学习
-        </button>
-        <button className={listFilter === 'mastered' ? 'active' : ''} onClick={() => setListFilter('mastered')}>
-          已掌握
-        </button>
-        <button className={listFilter === 'due' ? 'active' : ''} onClick={() => setListFilter('due')}>
-          待复习
-        </button>
-      </div>
-      <p className="progress-text">共 {words.length} 个单词</p>
-      <ul className="word-list">
-        {words.map((w) => (
-          <li key={w.word} className="word-list-item">
-            <div>
-              <strong>{w.word}</strong>
-              <span className="phonetic">{w.phonetic}</span>
-              <p>{w.meaning}</p>
-              {w.example && <p className="example">{w.example}</p>}
-            </div>
-            <button onClick={() => onAddToNotebook(w)}>⭐</button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -451,9 +435,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
 
   return (
     <div className="review-view">
-      <p className="progress-text">
-        今日待复习：{dueWords.length} 个
-      </p>
+      <p className="progress-text">今日待复习：{dueWords.length} 个</p>
       <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
         <div className="card-face card-front">
           <h2>{current.word}</h2>
@@ -464,6 +446,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
           <p className="meaning">{current.meaning}</p>
           <p className="example">{current.example}</p>
           <p className="example-cn">{current.exampleCn}</p>
+          <p className="review-date">下次复习：{formatDate(current.nextReviewAt)}</p>
         </div>
       </div>
 
@@ -488,6 +471,15 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
           记得
         </button>
       </div>
+    </div>
+  );
+}
+
+function SettingsView({ progress, notebook, customWords, onImport, onClear }) {
+  return (
+    <div className="settings-view">
+      <h2>设置</h2>
+      <DataManager progress={progress} notebook={notebook} customWords={customWords} onImport={onImport} onClear={onClear} />
     </div>
   );
 }
