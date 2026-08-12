@@ -9,6 +9,7 @@ const TABS = [
   { key: 'learn', label: '学习' },
   { key: 'notebook', label: '单词本' },
   { key: 'review', label: '复习' },
+  { key: 'list', label: '列表' },
 ];
 
 function formatDate(iso) {
@@ -30,6 +31,7 @@ export default function App() {
   const [progress, setProgress] = useLocalStorage('bew_progress', {});
   const [notebook, setNotebook] = useLocalStorage('bew_notebook', []);
   const [customWords, setCustomWords] = useLocalStorage('bew_custom_words', []);
+  const [listFilter, setListFilter] = useLocalStorage('bew_list_filter', 'all');
 
   const allWords = useMemo(() => {
     const base = [...defaultVocabulary];
@@ -46,6 +48,20 @@ export default function App() {
       const p = progress[w.word];
       if (!p || !p.learnedAt) return false;
       return isDueForReview(p.nextReviewAt);
+    });
+  }, [allWords, progress]);
+
+  const masteredWords = useMemo(() => {
+    return allWords.filter((w) => {
+      const p = progress[w.word];
+      return p && p.level >= 4;
+    });
+  }, [allWords, progress]);
+
+  const learnedWords = useMemo(() => {
+    return allWords.filter((w) => {
+      const p = progress[w.word];
+      return p && p.learnedAt;
     });
   }, [allWords, progress]);
 
@@ -116,7 +132,12 @@ export default function App() {
 
       <main className="app-main">
         {activeTab === 'dashboard' && (
-          <Dashboard stats={stats} dueToday={dueToday} setTab={setActiveTab} />
+          <Dashboard
+            stats={stats}
+            dueToday={dueToday}
+            setTab={setActiveTab}
+            setListFilter={setListFilter}
+          />
         )}
         {activeTab === 'learn' && (
           <LearnView
@@ -141,6 +162,17 @@ export default function App() {
             onAddToNotebook={addToNotebook}
           />
         )}
+        {activeTab === 'list' && (
+          <WordListView
+            allWords={allWords}
+            learnedWords={learnedWords}
+            masteredWords={masteredWords}
+            dueToday={dueToday}
+            listFilter={listFilter}
+            setListFilter={setListFilter}
+            onAddToNotebook={addToNotebook}
+          />
+        )}
       </main>
 
       <nav className="app-nav bottom-nav">
@@ -158,23 +190,28 @@ export default function App() {
   );
 }
 
-function Dashboard({ stats, dueToday, setTab }) {
+function Dashboard({ stats, dueToday, setTab, setListFilter }) {
+  const goToList = (filter) => {
+    setListFilter(filter);
+    setTab('list');
+  };
+
   return (
     <div className="dashboard">
       <section className="stats-grid">
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => goToList('all')}>
           <span className="stat-number">{stats.total}</span>
           <span className="stat-label">总词数</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => goToList('learned')}>
           <span className="stat-number">{stats.learned}</span>
           <span className="stat-label">已学习</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card" onClick={() => goToList('mastered')}>
           <span className="stat-number">{stats.mastered}</span>
           <span className="stat-label">已掌握</span>
         </div>
-        <div className="stat-card highlight">
+        <div className="stat-card highlight" onClick={() => goToList('due')}>
           <span className="stat-number">{stats.dueToday}</span>
           <span className="stat-label">今日待复习</span>
         </div>
@@ -270,6 +307,7 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
           className="btn-again"
           onClick={() => {
             onLearned(current.word, 'again');
+            onAddToNotebook(current);
             handleNext();
           }}
         >
@@ -285,6 +323,70 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
           掌握
         </button>
       </div>
+    </div>
+  );
+}
+
+function WordListView({
+  allWords,
+  learnedWords,
+  masteredWords,
+  dueToday,
+  listFilter,
+  setListFilter,
+  onAddToNotebook,
+}) {
+  const words = useMemo(() => {
+    switch (listFilter) {
+      case 'learned':
+        return learnedWords;
+      case 'mastered':
+        return masteredWords;
+      case 'due':
+        return dueToday;
+      default:
+        return allWords;
+    }
+  }, [allWords, learnedWords, masteredWords, dueToday, listFilter]);
+
+  const titles = {
+    all: '全部单词',
+    learned: '已学习单词',
+    mastered: '已掌握单词',
+    due: '今日待复习',
+  };
+
+  return (
+    <div className="word-list-view">
+      <h2>{titles[listFilter] || '单词列表'}</h2>
+      <div className="list-filters">
+        <button className={listFilter === 'all' ? 'active' : ''} onClick={() => setListFilter('all')}>
+          全部
+        </button>
+        <button className={listFilter === 'learned' ? 'active' : ''} onClick={() => setListFilter('learned')}>
+          已学习
+        </button>
+        <button className={listFilter === 'mastered' ? 'active' : ''} onClick={() => setListFilter('mastered')}>
+          已掌握
+        </button>
+        <button className={listFilter === 'due' ? 'active' : ''} onClick={() => setListFilter('due')}>
+          待复习
+        </button>
+      </div>
+      <p className="progress-text">共 {words.length} 个单词</p>
+      <ul className="word-list">
+        {words.map((w) => (
+          <li key={w.word} className="word-list-item">
+            <div>
+              <strong>{w.word}</strong>
+              <span className="phonetic">{w.phonetic}</span>
+              <p>{w.meaning}</p>
+              {w.example && <p className="example">{w.example}</p>}
+            </div>
+            <button onClick={() => onAddToNotebook(w)}>⭐</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -371,7 +473,15 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
       </div>
 
       <div className="rating">
-        <button className="btn-again" onClick={() => handleNext('again')}>
+        <button
+          className="btn-again"
+          onClick={() => {
+            onReview(current.word, 'again');
+            onAddToNotebook(current);
+            setFlipped(false);
+            setIndex((i) => (i + 1) % dueWords.length);
+          }}
+        >
           忘记
         </button>
         <button className="btn-good" onClick={() => handleNext('good')}>
