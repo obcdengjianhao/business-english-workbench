@@ -1,16 +1,18 @@
 :root {
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-  --success: #22c55e;
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --bg: #f8fafc;
+  --bg: #f1f5f9;
   --surface: #ffffff;
-  --text: #1e293b;
+  --text: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+  --radius: 16px;
+  --radius-sm: 10px;
 
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -34,36 +36,40 @@ body {
 .app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 16px 16px 96px;
   transition: background 0.3s, color 0.3s;
 }
 
 .app-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   position: relative;
 }
 
 .app-header h1 {
-  font-size: 28px;
-  margin: 0 0 16px;
+  font-size: 24px;
+  margin: 0;
   color: var(--primary-dark);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .theme-toggle {
   position: absolute;
   right: 0;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 999px;
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow);
 }
 
 .app-nav {
@@ -94,9 +100,8 @@ body {
 .app-main {
   background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 24px;
-  margin-bottom: 80px;
+  box-shadow: var(--shadow-lg);
+  padding: 20px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -116,21 +121,22 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
-  padding: 12px 16px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   z-index: 100;
 }
 
 .bottom-nav button {
   flex: 1;
-  padding: 10px 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-muted);
   transition: all 0.2s;
   white-space: nowrap;
@@ -140,21 +146,21 @@ body {
 .bottom-nav button.active {
   background: var(--primary);
   color: #fff;
-  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
 /* Dashboard */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
   background: var(--bg);
-  border-radius: var(--radius);
-  padding: 16px;
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
   text-align: center;
   border: 1px solid var(--border);
   cursor: pointer;
@@ -173,35 +179,36 @@ body {
 
 .stat-number {
   display: block;
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--primary);
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .quick-actions,
 .tips,
 .learning-path {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .learning-path .path-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .path-step {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: var(--bg);
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -222,8 +229,8 @@ body {
 }
 
 .path-step .step-number {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
@@ -231,6 +238,7 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
@@ -241,23 +249,24 @@ body {
 
 .path-step strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  font-size: 14px;
 }
 
 .path-step p {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .path-step button {
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: none;
   border-radius: 8px;
   background: var(--primary);
   color: #fff;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
@@ -272,9 +281,12 @@ body {
 .add-word h2,
 .notebook-list h2,
 .word-list-view h2,
-.settings-view h2 {
-  font-size: 18px;
-  margin-bottom: 12px;
+.settings-view h2,
+.learning-path h2,
+.stats-view h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  font-weight: 700;
 }
 
 .actions {
@@ -292,10 +304,22 @@ body {
 .import-label {
   padding: 10px 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  transition: opacity 0.2s;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.actions button:hover,
+.card-actions button:hover,
+.rating button:hover,
+.add-word button:hover,
+.data-actions button:hover,
+.import-label:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .actions button {
@@ -310,9 +334,14 @@ body {
 }
 
 .tips ul {
-  padding-left: 20px;
+  padding-left: 18px;
+  margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.tips li {
+  margin-bottom: 4px;
 }
 
 /* Card */
@@ -344,7 +373,7 @@ body {
 .card {
   width: 100%;
   max-width: 420px;
-  height: 280px;
+  height: 260px;
   margin: 0 auto 16px;
   perspective: 1000px;
   cursor: pointer;
@@ -361,9 +390,9 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 24px;
-  box-shadow: var(--shadow);
-  transition: transform 0.6s;
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-front {
@@ -384,8 +413,9 @@ body {
 }
 
 .card h2 {
-  font-size: 36px;
+  font-size: 34px;
   margin: 0 0 8px;
+  font-weight: 800;
 }
 
 .phonetic {
@@ -473,6 +503,9 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
 }
 
 .rating {
@@ -483,16 +516,17 @@ body {
 }
 
 .rating button {
-  min-width: 80px;
-  font-size: 14px;
+  min-width: 76px;
+  font-size: 13px;
   color: #fff;
-  padding: 10px 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
 }
 
 .rating.four button {
-  min-width: 70px;
-  font-size: 13px;
-  padding: 8px 10px;
+  min-width: 68px;
+  font-size: 12px;
+  padding: 8px 8px;
 }
 
 .btn-again {
@@ -522,13 +556,15 @@ body {
 .add-word input {
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
+  background: var(--surface);
 }
 
 .add-word button {
   background: var(--primary);
   color: #fff;
+  border-radius: 10px;
 }
 
 .notebook-list ul {
@@ -663,7 +699,7 @@ body {
 .list-controls select {
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   background: var(--surface);
   color: var(--text);
