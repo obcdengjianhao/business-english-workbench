@@ -28,7 +28,13 @@ export function DataManager({ progress, notebook, customWords, onImport, onClear
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        onImport(data);
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid data');
+        }
+        const validProgress = data.progress && typeof data.progress === 'object' ? data.progress : {};
+        const validNotebook = Array.isArray(data.notebook) ? data.notebook : [];
+        const validCustomWords = Array.isArray(data.customWords) ? data.customWords : [];
+        onImport({ progress: validProgress, notebook: validNotebook, customWords: validCustomWords });
         setMessage('数据导入成功');
       } catch (err) {
         setMessage('导入失败：文件格式错误');

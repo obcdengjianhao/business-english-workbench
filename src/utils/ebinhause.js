@@ -28,7 +28,7 @@ export function getNextReviewDate(level, ease = DEFAULT_EASE, quality = 2) {
   }
 
   const date = new Date();
-  date.setDate(date.getDate() + interval);
+  date.setTime(date.getTime() + interval * 24 * 60 * 60 * 1000);
   return date.toISOString();
 }
 

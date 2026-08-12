@@ -33,7 +33,7 @@ export function StatsView({ progress, totalWords }) {
       else if (p.level >= 1) levels['熟悉'] += 1;
       else levels['初学'] += 1;
     });
-    levels['未学习'] = totalWords - Object.values(progress).length;
+    levels['未学习'] = Math.max(0, totalWords - Object.values(progress).length);
     return levels;
   }, [progress, totalWords]);
 

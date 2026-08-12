@@ -48,20 +48,24 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    const handleGoTab = (e) => setActiveTab(e.detail);
+    window.addEventListener('bew-go-tab', handleGoTab);
+    return () => window.removeEventListener('bew-go-tab', handleGoTab);
+  }, []);
+
+  useEffect(() => {
     const handleKey = (e) => {
       if (showOnboarding) return;
-      if (activeTab !== 'learn' && activeTab !== 'review') return;
+      if (activeTab !== 'learn' && activeTab !== 'review' && activeTab !== 'notebook-learn') return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       if (e.code === 'Space') {
         e.preventDefault();
-        document.querySelector('.card')?.click();
+        window.dispatchEvent(new CustomEvent('bew-flip-card'));
       }
-      if (activeTab === 'learn' || activeTab === 'review') {
-        if (e.key === '1') document.querySelector('.btn-again')?.click();
-        if (e.key === '2') document.querySelector('.btn-hard')?.click();
-        if (e.key === '3') document.querySelector('.btn-good')?.click();
-        if (e.key === '4') document.querySelector('.btn-easy')?.click();
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('bew-rate-card', { detail: parseInt(e.key, 10) - 1 }));
       }
     };
 
@@ -230,14 +234,22 @@ export default function App() {
                 <h2>单词本重点学习</h2>
                 <button onClick={() => setActiveTab('notebook')}>返回单词本</button>
               </div>
-              <LearnView
-                words={notebook}
-                progress={progress}
-                onLearned={markLearned}
-                onAddToNotebook={addToNotebook}
-                autoSpeak={autoSpeak}
-                speechRate={speechRate}
-              />
+              {notebook.length === 0 ? (
+                <div className="empty-state">
+                  <h2>单词本还是空的</h2>
+                  <p>学习或复习时点击「加入单词本」，把生疏词加进来再重点突破。</p>
+                  <button onClick={() => setActiveTab('learn')}>去学习</button>
+                </div>
+              ) : (
+                <LearnView
+                  words={notebook}
+                  progress={progress}
+                  onLearned={markLearned}
+                  onAddToNotebook={addToNotebook}
+                  autoSpeak={autoSpeak}
+                  speechRate={speechRate}
+                />
+              )}
             </div>
           )}
         {activeTab === 'list' && (
@@ -378,6 +390,21 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
   const [showSummary, setShowSummary] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
+  useEffect(() => {
+    const handleFlip = () => setFlipped((f) => !f);
+    const handleRate = (e) => {
+      const quality = e.detail;
+      const btn = document.querySelectorAll('.rating.four button')[quality];
+      btn?.click();
+    };
+    window.addEventListener('bew-flip-card', handleFlip);
+    window.addEventListener('bew-rate-card', handleRate);
+    return () => {
+      window.removeEventListener('bew-flip-card', handleFlip);
+      window.removeEventListener('bew-rate-card', handleRate);
+    };
+  }, []);
+
   const unlearned = useMemo(
     () => words.filter((w) => !progress[w.word]?.learnedAt),
     [words, progress]
@@ -390,11 +417,19 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
     return (
       <div className="empty-state">
         <h2>太棒了！</h2>
-        <p>你已经学完了所有内置单词，去「单词本」添加更多吧。</p>
+        <p>你已经学完了当前所有单词。</p>
         <p className="progress-text">
           学习进度：{learnedCount}/{words.length} ({progressPercent}%)
         </p>
-        <button onClick={() => setShowSummary(false)}>继续学习</button>
+        <div className="actions">
+          <button onClick={() => setShowSummary(false)}>再学一遍</button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'review' }))}>
+            去复习
+          </button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'notebook' }))}>
+            去单词本
+          </button>
+        </div>
       </div>
     );
   }
@@ -539,6 +574,21 @@ function NotebookView({ notebook, onRemove, onAddCustom, onStudyNotebook }) {
 function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate, progress }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    const handleFlip = () => setFlipped((f) => !f);
+    const handleRate = (e) => {
+      const quality = e.detail;
+      const btn = document.querySelectorAll('.rating.four button')[quality];
+      btn?.click();
+    };
+    window.addEventListener('bew-flip-card', handleFlip);
+    window.addEventListener('bew-rate-card', handleRate);
+    return () => {
+      window.removeEventListener('bew-flip-card', handleFlip);
+      window.removeEventListener('bew-rate-card', handleRate);
+    };
+  }, []);
 
   if (dueWords.length === 0) {
     return (
