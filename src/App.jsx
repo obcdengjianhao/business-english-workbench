@@ -206,24 +206,40 @@ export default function App() {
             speechRate={speechRate}
           />
         )}
-        {activeTab === 'notebook' && (
-          <NotebookView
-            notebook={notebook}
-            onRemove={removeFromNotebook}
-            onAddCustom={addCustomWord}
-            onStudyNotebook={() => setActiveTab('learn')}
-          />
-        )}
-        {activeTab === 'review' && (
-          <ReviewView
-            dueWords={dueToday}
-            progress={progress}
-            onReview={markLearned}
-            onAddToNotebook={addToNotebook}
-            autoSpeak={autoSpeak}
-            speechRate={speechRate}
-          />
-        )}
+          {activeTab === 'notebook' && (
+            <NotebookView
+              notebook={notebook}
+              onRemove={removeFromNotebook}
+              onAddCustom={addCustomWord}
+              onStudyNotebook={() => setActiveTab('notebook-learn')}
+            />
+          )}
+          {activeTab === 'review' && (
+            <ReviewView
+              dueWords={dueToday}
+              progress={progress}
+              onReview={markLearned}
+              onAddToNotebook={addToNotebook}
+              autoSpeak={autoSpeak}
+              speechRate={speechRate}
+            />
+          )}
+          {activeTab === 'notebook-learn' && (
+            <div>
+              <div className="notebook-learn-header">
+                <h2>单词本重点学习</h2>
+                <button onClick={() => setActiveTab('notebook')}>返回单词本</button>
+              </div>
+              <LearnView
+                words={notebook}
+                progress={progress}
+                onLearned={markLearned}
+                onAddToNotebook={addToNotebook}
+                autoSpeak={autoSpeak}
+                speechRate={speechRate}
+              />
+            </div>
+          )}
         {activeTab === 'list' && (
           <WordListView
             allWords={allWords}
@@ -520,7 +536,7 @@ function NotebookView({ notebook, onRemove, onAddCustom, onStudyNotebook }) {
   );
 }
 
-function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate }) {
+function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate, progress }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
@@ -562,7 +578,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
           <p className="example">{current.example}</p>
           <p className="example-cn">{current.exampleCn}</p>
-          <p className="review-date">下次复习：{formatDate(current.nextReviewAt)}</p>
+          <p className="review-date">下次复习：{formatDate(progress[current.word]?.nextReviewAt)}</p>
         </div>
       </div>
 

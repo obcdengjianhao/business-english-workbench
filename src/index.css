@@ -590,6 +590,28 @@ body {
   font-size: 13px;
 }
 
+.notebook-learn-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.notebook-learn-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.notebook-learn-header button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;
