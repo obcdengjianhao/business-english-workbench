@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 
 const SORT_OPTIONS = [
   { key: 'frequency-asc', label: '频率从低到高' },
@@ -6,6 +6,8 @@ const SORT_OPTIONS = [
   { key: 'alpha-asc', label: 'A-Z' },
   { key: 'alpha-desc', label: 'Z-A' },
 ];
+
+const PAGE_SIZE = 50;
 
 export function WordListView({
   allWords,
@@ -21,6 +23,7 @@ export function WordListView({
   const [tagFilter, setTagFilter] = useState('');
   const [freqRange, setFreqRange] = useState('all');
   const [sort, setSort] = useState('frequency-asc');
+  const [page, setPage] = useState(1);
 
   const allTags = useMemo(() => {
     const set = new Set();
@@ -83,6 +86,29 @@ export function WordListView({
 
     return result;
   }, [baseWords, search, tagFilter, freqRange, sort]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = useMemo(() => {
+    return filtered.slice(0, page * PAGE_SIZE);
+  }, [filtered, page]);
+
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, tagFilter, freqRange, sort, listFilter]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && page < totalPages) {
+        setPage((p) => p + 1);
+      }
+    });
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [paginated.length, totalPages, page]);
 
   const titles = {
     all: '全部单词',
@@ -147,8 +173,8 @@ export function WordListView({
         {search && `（搜索 "${search}"）`}
       </p>
 
-      <ul className="word-list">
-        {filtered.map((w) => {
+      <ul className="word-list" ref={observerRef}>
+        {paginated.map((w) => {
           const p = progress[w.word];
           return (
             <li key={`${w.id}-${w.word}`} className="word-list-item">
@@ -177,6 +203,12 @@ export function WordListView({
           );
         })}
       </ul>
+
+      {page < totalPages && (
+        <div ref={loadMoreRef} className="load-more">
+          加载更多...
+        </div>
+      )}
     </div>
   );
 }

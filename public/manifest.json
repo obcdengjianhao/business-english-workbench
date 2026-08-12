@@ -1,0 +1,16 @@
+{
+  "name": "商务英语词汇工作台",
+  "short_name": "商务英语",
+  "description": "基于科学记忆曲线的商务英语词汇学习工具",
+  "start_url": "/business-english-workbench/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "icons.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

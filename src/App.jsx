@@ -5,6 +5,8 @@ import { getNextReviewDate, isDueForReview } from './utils/ebinhause';
 import { WordListView } from './components/WordListView';
 import { DataManager } from './components/DataManager';
 import { ThemeToggle } from './components/ThemeToggle';
+import { StatsView } from './components/StatsView';
+import { Onboarding } from './components/Onboarding';
 import './index.css';
 
 const TABS = [
@@ -22,11 +24,11 @@ function formatDate(iso) {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-function speak(word) {
+function speak(word, rate = 0.9) {
   if (!window.speechSynthesis) return;
   const utter = new SpeechSynthesisUtterance(word);
   utter.lang = 'en-US';
-  utter.rate = 0.9;
+  utter.rate = rate;
   window.speechSynthesis.speak(utter);
 }
 
@@ -37,10 +39,35 @@ export default function App() {
   const [customWords, setCustomWords] = useLocalStorage('bew_custom_words', []);
   const [listFilter, setListFilter] = useLocalStorage('bew_list_filter', 'all');
   const [darkMode, setDarkMode] = useLocalStorage('bew_dark_mode', false);
+  const [autoSpeak, setAutoSpeak] = useLocalStorage('bew_auto_speak', false);
+  const [speechRate, setSpeechRate] = useLocalStorage('bew_speech_rate', 0.9);
+  const [showOnboarding, setShowOnboarding] = useLocalStorage('bew_onboarding', true);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (showOnboarding) return;
+      if (activeTab !== 'learn' && activeTab !== 'review') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        document.querySelector('.card')?.click();
+      }
+      if (activeTab === 'learn' || activeTab === 'review') {
+        if (e.key === '1') document.querySelector('.btn-again')?.click();
+        if (e.key === '2') document.querySelector('.btn-hard')?.click();
+        if (e.key === '3') document.querySelector('.btn-good')?.click();
+        if (e.key === '4') document.querySelector('.btn-easy')?.click();
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [activeTab, showOnboarding]);
 
   const allWords = useMemo(() => {
     const base = [...defaultVocabulary];
@@ -85,17 +112,20 @@ export default function App() {
     };
   }, [allWords, progress, notebook, dueToday]);
 
-  const markLearned = (word, quality = 'good') => {
+  const markLearned = (word, quality = 2) => {
     setProgress((prev) => {
-      const p = prev[word] || { level: 0 };
-      const nextLevel = quality === 'again' ? 0 : Math.min((p.level || 0) + 1, 7);
+      const p = prev[word] || { level: 0, ease: 2.5 };
+      const q = typeof quality === 'string' ? (quality === 'again' ? 0 : 2) : quality;
+      const nextLevel = q < 2 ? Math.max(0, (p.level || 0) - 1) : Math.min((p.level || 0) + 1, 12);
+      const nextEase = q === 3 ? (p.ease || 2.5) + 0.15 : q === 0 ? Math.max(1.3, (p.ease || 2.5) - 0.2) : (p.ease || 2.5);
       return {
         ...prev,
         [word]: {
           ...p,
           level: nextLevel,
+          ease: nextEase,
           learnedAt: new Date().toISOString(),
-          nextReviewAt: getNextReviewDate(nextLevel),
+          nextReviewAt: getNextReviewDate(nextLevel, nextEase, q),
         },
       };
     });
@@ -149,6 +179,7 @@ export default function App() {
 
   return (
     <div className={`app ${darkMode ? 'dark' : ''}`}>
+      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
       <header className="app-header">
         <h1>商务英语词汇工作台</h1>
         <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
@@ -161,6 +192,8 @@ export default function App() {
             dueToday={dueToday}
             setTab={setActiveTab}
             setListFilter={setListFilter}
+            progress={progress}
+            allWords={allWords}
           />
         )}
         {activeTab === 'learn' && (
@@ -169,6 +202,8 @@ export default function App() {
             progress={progress}
             onLearned={markLearned}
             onAddToNotebook={addToNotebook}
+            autoSpeak={autoSpeak}
+            speechRate={speechRate}
           />
         )}
         {activeTab === 'notebook' && (
@@ -176,6 +211,7 @@ export default function App() {
             notebook={notebook}
             onRemove={removeFromNotebook}
             onAddCustom={addCustomWord}
+            onStudyNotebook={() => setActiveTab('learn')}
           />
         )}
         {activeTab === 'review' && (
@@ -184,6 +220,8 @@ export default function App() {
             progress={progress}
             onReview={markLearned}
             onAddToNotebook={addToNotebook}
+            autoSpeak={autoSpeak}
+            speechRate={speechRate}
           />
         )}
         {activeTab === 'list' && (
@@ -205,6 +243,10 @@ export default function App() {
             customWords={customWords}
             onImport={importData}
             onClear={clearData}
+            autoSpeak={autoSpeak}
+            setAutoSpeak={setAutoSpeak}
+            speechRate={speechRate}
+            setSpeechRate={setSpeechRate}
           />
         )}
       </main>
@@ -224,11 +266,15 @@ export default function App() {
   );
 }
 
-function Dashboard({ stats, dueToday, setTab, setListFilter }) {
+function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords }) {
   const goToList = (filter) => {
     setListFilter(filter);
     setTab('list');
   };
+
+  const newWordsCount = Math.max(0, stats.total - stats.learned);
+  const recommendedReview = Math.min(dueToday.length, 20);
+  const recommendedLearn = Math.min(newWordsCount, 10);
 
   return (
     <div className="dashboard">
@@ -251,8 +297,42 @@ function Dashboard({ stats, dueToday, setTab, setListFilter }) {
         </div>
       </section>
 
+      <section className="learning-path">
+        <h2>今日学习路径</h2>
+        <div className="path-steps">
+          <div className={`path-step ${dueToday.length > 0 ? 'active' : 'done'}`}>
+            <span className="step-number">1</span>
+            <div>
+              <strong>复习旧词</strong>
+              <p>今日待复习 {dueToday.length} 个，建议完成 {recommendedReview} 个</p>
+            </div>
+            <button onClick={() => setTab('review')} disabled={dueToday.length === 0}>
+              去复习
+            </button>
+          </div>
+          <div className={`path-step ${dueToday.length === 0 && newWordsCount > 0 ? 'active' : ''}`}>
+            <span className="step-number">2</span>
+            <div>
+              <strong>学习新词</strong>
+              <p>剩余未学 {newWordsCount} 个，建议学习 {recommendedLearn} 个</p>
+            </div>
+            <button onClick={() => setTab('learn')} disabled={newWordsCount === 0}>
+              去学习
+            </button>
+          </div>
+          <div className="path-step">
+            <span className="step-number">3</span>
+            <div>
+              <strong>单词本复盘</strong>
+              <p>重点突破生疏词汇</p>
+            </div>
+            <button onClick={() => setTab('notebook')}>去查看</button>
+          </div>
+        </div>
+      </section>
+
       <section className="quick-actions">
-        <h2>今日行动</h2>
+        <h2>快速行动</h2>
         <div className="actions">
           <button onClick={() => setTab('learn')}>开始学习新词</button>
           <button onClick={() => setTab('review')} disabled={dueToday.length === 0}>
@@ -270,14 +350,17 @@ function Dashboard({ stats, dueToday, setTab, setListFilter }) {
           <li>卡片翻转前先主动回忆释义，效果更好。</li>
         </ul>
       </section>
+
+      <StatsView progress={progress} totalWords={allWords.length} />
     </div>
   );
 }
 
-function LearnView({ words, progress, onLearned, onAddToNotebook }) {
+function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, speechRate }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
   const unlearned = useMemo(
     () => words.filter((w) => !progress[w.word]?.learnedAt),
@@ -312,6 +395,16 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
     setIndex((i) => (i + 1) % unlearned.length);
   };
 
+  const handleRate = (quality) => {
+    const labels = { 0: '已加入单词本', 1: '已加入单词本', 2: '已掌握', 3: '已熟练' };
+    const colors = { 0: '#ef4444', 1: '#f59e0b', 2: '#22c55e', 3: '#3b82f6' };
+    setFeedback({ text: labels[quality], color: colors[quality] });
+    setTimeout(() => setFeedback(null), 800);
+    onLearned(current.word, quality);
+    if (quality < 2) onAddToNotebook(current);
+    handleNext();
+  };
+
   return (
     <div className="learn-view">
       <div className="progress-bar">
@@ -324,14 +417,22 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
         学习进度：{learnedCount}/{words.length} ({progressPercent}%) · 剩余未学：{unlearned.length}
       </p>
 
-      <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
+      <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => {
+        setFlipped(!flipped);
+        if (!flipped && autoSpeak) speak(current.word, speechRate);
+      }}>
         <div className="card-face card-front">
           <h2>{current.word}</h2>
           <p className="phonetic">{current.phonetic}</p>
           <span className="hint">点击翻转查看释义</span>
         </div>
         <div className="card-face card-back">
-          <p className="meaning">{current.meaning}</p>
+          <p className="meaning">
+            {current.partOfSpeech && <span className="pos">{current.partOfSpeech}</span>}
+            {current.meaning}
+          </p>
+          {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
+          {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
           <p className="example">{current.example}</p>
           <p className="example-cn">{current.exampleCn}</p>
           <div className="tags">
@@ -340,42 +441,42 @@ function LearnView({ words, progress, onLearned, onAddToNotebook }) {
                 {t}
               </span>
             ))}
+            <span className="tag freq">freq {current.frequency}</span>
           </div>
         </div>
       </div>
 
       <div className="card-actions">
-        <button onClick={() => speak(current.word)}>🔊 发音</button>
+        <button onClick={() => speak(current.word, speechRate)}>🔊 发音</button>
         <button onClick={() => onAddToNotebook(current)}>⭐ 加入单词本</button>
         <button onClick={handleSkip}>⏭ 跳过</button>
       </div>
 
-      <div className="rating">
-        <button
-          className="btn-again"
-          onClick={() => {
-            onLearned(current.word, 'again');
-            onAddToNotebook(current);
-            handleNext();
-          }}
-        >
-          生疏
+      {feedback && (
+        <div className="feedback-toast" style={{ color: feedback.color }}>
+          {feedback.text}
+        </div>
+      )}
+
+      <div className="rating four">
+        <button className="btn-again" onClick={() => handleRate(0)}>
+          忘记
         </button>
-        <button
-          className="btn-good"
-          onClick={() => {
-            onLearned(current.word, 'good');
-            handleNext();
-          }}
-        >
-          掌握
+        <button className="btn-hard" onClick={() => handleRate(1)}>
+          模糊
+        </button>
+        <button className="btn-good" onClick={() => handleRate(2)}>
+          记得
+        </button>
+        <button className="btn-easy" onClick={() => handleRate(3)}>
+          熟练
         </button>
       </div>
     </div>
   );
 }
 
-function NotebookView({ notebook, onRemove, onAddCustom }) {
+function NotebookView({ notebook, onRemove, onAddCustom, onStudyNotebook }) {
   return (
     <div className="notebook-view">
       <section className="add-word">
@@ -389,7 +490,14 @@ function NotebookView({ notebook, onRemove, onAddCustom }) {
       </section>
 
       <section className="notebook-list">
-        <h2>我的单词本 ({notebook.length})</h2>
+        <div className="notebook-header">
+          <h2>我的单词本 ({notebook.length})</h2>
+          {notebook.length > 0 && (
+            <button className="study-notebook-btn" onClick={onStudyNotebook}>
+              重点学习
+            </button>
+          )}
+        </div>
         {notebook.length === 0 ? (
           <p className="empty">单词本还是空的，学习时点击「加入单词本」即可添加。</p>
         ) : (
@@ -412,7 +520,7 @@ function NotebookView({ notebook, onRemove, onAddCustom }) {
   );
 }
 
-function ReviewView({ dueWords, onReview, onAddToNotebook }) {
+function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
@@ -436,14 +544,22 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
   return (
     <div className="review-view">
       <p className="progress-text">今日待复习：{dueWords.length} 个</p>
-      <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => setFlipped(!flipped)}>
+      <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => {
+        setFlipped(!flipped);
+        if (!flipped && autoSpeak) speak(current.word, speechRate);
+      }}>
         <div className="card-face card-front">
           <h2>{current.word}</h2>
           <p className="phonetic">{current.phonetic}</p>
           <span className="hint">点击翻转</span>
         </div>
         <div className="card-face card-back">
-          <p className="meaning">{current.meaning}</p>
+          <p className="meaning">
+            {current.partOfSpeech && <span className="pos">{current.partOfSpeech}</span>}
+            {current.meaning}
+          </p>
+          {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
+          {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
           <p className="example">{current.example}</p>
           <p className="example-cn">{current.exampleCn}</p>
           <p className="review-date">下次复习：{formatDate(current.nextReviewAt)}</p>
@@ -451,15 +567,15 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
       </div>
 
       <div className="card-actions">
-        <button onClick={() => speak(current.word)}>🔊 发音</button>
+        <button onClick={() => speak(current.word, speechRate)}>🔊 发音</button>
         <button onClick={() => onAddToNotebook(current)}>⭐ 加入单词本</button>
       </div>
 
-      <div className="rating">
+      <div className="rating four">
         <button
           className="btn-again"
           onClick={() => {
-            onReview(current.word, 'again');
+            onReview(current.word, 0);
             onAddToNotebook(current);
             setFlipped(false);
             setIndex((i) => (i + 1) % dueWords.length);
@@ -467,18 +583,80 @@ function ReviewView({ dueWords, onReview, onAddToNotebook }) {
         >
           忘记
         </button>
-        <button className="btn-good" onClick={() => handleNext('good')}>
+        <button
+          className="btn-hard"
+          onClick={() => {
+            onReview(current.word, 1);
+            onAddToNotebook(current);
+            setFlipped(false);
+            setIndex((i) => (i + 1) % dueWords.length);
+          }}
+        >
+          模糊
+        </button>
+        <button
+          className="btn-good"
+          onClick={() => {
+            onReview(current.word, 2);
+            setFlipped(false);
+            setIndex((i) => (i + 1) % dueWords.length);
+          }}
+        >
           记得
+        </button>
+        <button
+          className="btn-easy"
+          onClick={() => {
+            onReview(current.word, 3);
+            setFlipped(false);
+            setIndex((i) => (i + 1) % dueWords.length);
+          }}
+        >
+          熟练
         </button>
       </div>
     </div>
   );
 }
 
-function SettingsView({ progress, notebook, customWords, onImport, onClear }) {
+function SettingsView({
+  progress,
+  notebook,
+  customWords,
+  onImport,
+  onClear,
+  autoSpeak,
+  setAutoSpeak,
+  speechRate,
+  setSpeechRate,
+}) {
   return (
     <div className="settings-view">
       <h2>设置</h2>
+
+      <section className="setting-section">
+        <h3>发音设置</h3>
+        <label className="setting-row">
+          <input
+            type="checkbox"
+            checked={autoSpeak}
+            onChange={(e) => setAutoSpeak(e.target.checked)}
+          />
+          <span>卡片翻转时自动发音</span>
+        </label>
+        <label className="setting-row">
+          <span>语速：{speechRate.toFixed(1)}</span>
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.1"
+            value={speechRate}
+            onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+          />
+        </label>
+      </section>
+
       <DataManager progress={progress} notebook={notebook} customWords={customWords} onImport={onImport} onClear={onClear} />
     </div>
   );
