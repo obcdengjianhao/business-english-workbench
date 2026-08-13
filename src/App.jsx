@@ -438,12 +438,16 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
 
   const handleNext = () => {
     setFlipped(false);
-    setIndex((i) => (i + 1) % unlearned.length);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % unlearned.length);
+    }, 200);
   };
 
   const handleSkip = () => {
     setFlipped(false);
-    setIndex((i) => (i + 1) % unlearned.length);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % unlearned.length);
+    }, 200);
   };
 
   const handleRate = (quality) => {
@@ -453,7 +457,10 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
     setTimeout(() => setFeedback(null), 800);
     onLearned(current.word, quality);
     if (quality < 2) onAddToNotebook(current);
-    handleNext();
+    setFlipped(false);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % unlearned.length);
+    }, 200);
   };
 
   return (
@@ -604,7 +611,9 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
   const handleNext = (quality) => {
     onReview(current.word, quality);
     setFlipped(false);
-    setIndex((i) => (i + 1) % dueWords.length);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % dueWords.length);
+    }, 200);
   };
 
   return (
@@ -644,7 +653,9 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onReview(current.word, 0);
             onAddToNotebook(current);
             setFlipped(false);
-            setIndex((i) => (i + 1) % dueWords.length);
+            setTimeout(() => {
+              setIndex((i) => (i + 1) % dueWords.length);
+            }, 200);
           }}
         >
           忘记
@@ -655,7 +666,9 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onReview(current.word, 1);
             onAddToNotebook(current);
             setFlipped(false);
-            setIndex((i) => (i + 1) % dueWords.length);
+            setTimeout(() => {
+              setIndex((i) => (i + 1) % dueWords.length);
+            }, 200);
           }}
         >
           模糊
@@ -665,7 +678,9 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           onClick={() => {
             onReview(current.word, 2);
             setFlipped(false);
-            setIndex((i) => (i + 1) % dueWords.length);
+            setTimeout(() => {
+              setIndex((i) => (i + 1) % dueWords.length);
+            }, 200);
           }}
         >
           记得
@@ -675,7 +690,9 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           onClick={() => {
             onReview(current.word, 3);
             setFlipped(false);
-            setIndex((i) => (i + 1) % dueWords.length);
+            setTimeout(() => {
+              setIndex((i) => (i + 1) % dueWords.length);
+            }, 200);
           }}
         >
           熟练

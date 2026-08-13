@@ -42,6 +42,7 @@ body {
 
 .app-main {
   padding-bottom: 24px;
+  min-height: calc(100vh - 120px - 60px);
 }
 
 .app-header {
@@ -385,6 +386,8 @@ body {
   margin: 0 auto 12px;
   perspective: 1000px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .card-face {
@@ -514,6 +517,7 @@ body {
   border-radius: 10px;
   padding: 8px 14px;
   font-size: 13px;
+  min-height: 40px;
 }
 
 .rating {
@@ -529,6 +533,7 @@ body {
   color: #fff;
   padding: 10px 12px;
   border-radius: 10px;
+  min-height: 44px;
 }
 
 .rating.four button {
@@ -1048,7 +1053,7 @@ body {
 
 @media (max-width: 600px) {
   .app {
-    padding: 12px 12px 80px;
+    padding: 12px 12px 100px;
   }
 
   .app-main {
@@ -1065,11 +1070,37 @@ body {
 
   .rating button {
     min-width: 70px;
-    padding: 8px 6px;
+    padding: 10px 6px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .card-actions button {
+    padding: 10px 12px;
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .bottom-nav button {
+    padding: 10px 4px;
+    font-size: 12px;
+    min-height: 44px;
   }
 
   .theme-toggle {
     top: -8px;
     right: -8px;
+  }
+
+  .stat-card {
+    padding: 10px 4px;
+  }
+
+  .stat-number {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 11px;
   }
 }
