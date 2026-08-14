@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { defaultVocabulary } from './data/vocabulary';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getNextReviewDate, isDueForReview } from './utils/ebinhause';
+import { useSwipe } from './hooks/useSwipe';
 import { WordListView } from './components/WordListView';
 import { DataManager } from './components/DataManager';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -454,6 +455,11 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
     }, 200);
   };
 
+  useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handleSkip,
+  });
+
   const handleRate = (quality) => {
     const labels = { 0: '已加入单词本', 1: '已加入单词本', 2: '已掌握', 3: '已熟练' };
     const colors = { 0: '#ef4444', 1: '#f59e0b', 2: '#22c55e', 3: '#3b82f6' };
@@ -619,6 +625,11 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
       setIndex((i) => (i + 1) % dueWords.length);
     }, 200);
   };
+
+  useSwipe({
+    onSwipeLeft: () => handleNext(2),
+    onSwipeRight: () => handleNext(0),
+  });
 
   return (
     <div className="review-view">
