@@ -481,9 +481,74 @@ body {
   margin-bottom: 4px;
 }
 
+.example-word {
+  color: var(--primary-dark);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.example-word:hover {
+  color: var(--primary);
+}
+
 .example-cn {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+.word-tooltip-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  padding: 24px;
+}
+
+.word-tooltip {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  text-align: left;
+}
+
+.word-tooltip-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.word-tooltip h3 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: var(--text);
+}
+
+.word-tooltip-meaning {
+  color: var(--text);
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.word-tooltip-missing {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0;
 }
 
 .tags {

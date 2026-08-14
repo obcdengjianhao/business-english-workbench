@@ -7,6 +7,7 @@ import { DataManager } from './components/DataManager';
 import { ThemeToggle } from './components/ThemeToggle';
 import { StatsView } from './components/StatsView';
 import { Onboarding } from './components/Onboarding';
+import { ClickableExample } from './components/ClickableExample';
 import './index.css';
 
 const TABS = [
@@ -200,7 +201,7 @@ export default function App() {
             allWords={allWords}
           />
         )}
-        {activeTab === 'learn' && (
+          {activeTab === 'learn' && (
           <LearnView
             words={allWords}
             progress={progress}
@@ -208,6 +209,7 @@ export default function App() {
             onAddToNotebook={addToNotebook}
             autoSpeak={autoSpeak}
             speechRate={speechRate}
+            allWords={allWords}
           />
         )}
           {activeTab === 'notebook' && (
@@ -226,6 +228,7 @@ export default function App() {
               onAddToNotebook={addToNotebook}
               autoSpeak={autoSpeak}
               speechRate={speechRate}
+              allWords={allWords}
             />
           )}
           {activeTab === 'notebook-learn' && (
@@ -248,6 +251,7 @@ export default function App() {
                   onAddToNotebook={addToNotebook}
                   autoSpeak={autoSpeak}
                   speechRate={speechRate}
+                  allWords={allWords}
                 />
               )}
             </div>
@@ -384,7 +388,7 @@ function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords 
   );
 }
 
-function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, speechRate }) {
+function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, speechRate, allWords }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -491,7 +495,7 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <p className="example">{current.example}</p>
+          <ClickableExample example={current.example} allWords={allWords} />
           <p className="example-cn">{current.exampleCn}</p>
           <div className="tags">
             {current.tags?.map((t) => (
@@ -578,7 +582,7 @@ function NotebookView({ notebook, onRemove, onAddCustom, onStudyNotebook }) {
   );
 }
 
-function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate, progress }) {
+function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate, progress, allWords }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
@@ -635,7 +639,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <p className="example">{current.example}</p>
+          <ClickableExample example={current.example} allWords={allWords} />
           <p className="example-cn">{current.exampleCn}</p>
           <p className="review-date">下次复习：{formatDate(progress[current.word]?.nextReviewAt)}</p>
         </div>
