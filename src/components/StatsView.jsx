@@ -37,6 +37,46 @@ export function StatsView({ progress, totalWords }) {
     return levels;
   }, [progress, totalWords]);
 
+  const heatmapData = useMemo(() => {
+    const data = {};
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 119);
+
+    for (let i = 0; i < 120; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      data[key] = 0;
+    }
+
+    Object.values(progress).forEach((p) => {
+      if (!p.learnedAt) return;
+      const key = new Date(p.learnedAt).toISOString().split('T')[0];
+      if (key in data) data[key] += 1;
+    });
+
+    const weeks = [];
+    const totalDays = 120;
+    const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+    for (let i = 0; i < totalDays; i += 7) {
+      const week = [];
+      for (let j = 0; j < 7; j++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i + j);
+        const key = d.toISOString().split('T')[0];
+        week.push({
+          date: d,
+          key,
+          count: data[key] || 0,
+          dayName: dayNames[j],
+        });
+      }
+      weeks.push(week);
+    }
+    return weeks;
+  }, [progress]);
+
   const maxCount = Math.max(...last7Days.map((d) => d.count), 1);
   const chartHeight = 120;
   const barWidth = 32;
@@ -46,6 +86,14 @@ export function StatsView({ progress, totalWords }) {
   const colors = ['#4f46e5', '#22c55e', '#f59e0b', '#ef4444', '#94a3b8'];
   const distEntries = Object.entries(distribution);
   const totalDist = distEntries.reduce((sum, [, v]) => sum + v, 0);
+
+  const getHeatColor = (count) => {
+    if (count === 0) return 'var(--border)';
+    if (count <= 2) return '#86efac';
+    if (count <= 5) return '#22c55e';
+    if (count <= 10) return '#16a34a';
+    return '#15803d';
+  };
 
   return (
     <div className="stats-view">
@@ -87,6 +135,33 @@ export function StatsView({ progress, totalWords }) {
             })}
           </g>
         </svg>
+      </section>
+
+      <section className="chart-section">
+        <h3>学习日历</h3>
+        <div className="heatmap">
+          {heatmapData.map((week, wi) => (
+            <div key={wi} className="heatmap-week">
+              {week.map((day) => (
+                <div
+                  key={day.key}
+                  className="heatmap-day"
+                  title={`${day.key} 学习 ${day.count} 个单词`}
+                  style={{ background: getHeatColor(day.count) }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="heatmap-legend">
+          <span>少</span>
+          <div className="heatmap-legend-cell" style={{ background: 'var(--border)' }} />
+          <div className="heatmap-legend-cell" style={{ background: '#86efac' }} />
+          <div className="heatmap-legend-cell" style={{ background: '#22c55e' }} />
+          <div className="heatmap-legend-cell" style={{ background: '#16a34a' }} />
+          <div className="heatmap-legend-cell" style={{ background: '#15803d' }} />
+          <span>多</span>
+        </div>
       </section>
 
       <section className="chart-section">
