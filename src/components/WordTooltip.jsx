@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
-export function WordTooltip({ word, meaning, onClose }) {
+export function WordTooltip({ word, wordData, onClose }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -14,15 +14,25 @@ export function WordTooltip({ word, meaning, onClose }) {
   }, [onClose]);
 
   return (
-    <div className="word-tooltip-overlay">
-      <div className="word-tooltip" ref={ref}>
+    <div className="word-tooltip-overlay" onClick={onClose}>
+      <div className="word-tooltip" ref={ref} onClick={(e) => e.stopPropagation()}>
         <button className="word-tooltip-close" onClick={onClose}>
           ×
         </button>
         <h3>{word}</h3>
-        {meaning ? (
+        {wordData ? (
           <>
-            <p className="word-tooltip-meaning">{meaning}</p>
+            {wordData.phonetic && <p className="word-tooltip-phonetic">/{wordData.phonetic}/</p>}
+            <p className="word-tooltip-meaning">{wordData.meaning}</p>
+            {wordData.example && (
+              <p className="word-tooltip-example">{wordData.example}</p>
+            )}
+            {wordData.synonyms && (
+              <p className="word-tooltip-extra">同义：{wordData.synonyms}</p>
+            )}
+            {wordData.antonyms && (
+              <p className="word-tooltip-extra">反义：{wordData.antonyms}</p>
+            )}
           </>
         ) : (
           <p className="word-tooltip-missing">词库中暂未收录该词</p>

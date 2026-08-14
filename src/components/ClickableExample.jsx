@@ -2,9 +2,7 @@ import { useState, useMemo } from 'react';
 import { WordTooltip } from './WordTooltip';
 
 function normalizeWord(word) {
-  return word
-    .toLowerCase()
-    .replace(/[^a-z]/g, '');
+  return word.toLowerCase().replace(/[^a-z]/g, '');
 }
 
 export function ClickableExample({ example, allWords }) {
@@ -13,7 +11,7 @@ export function ClickableExample({ example, allWords }) {
   const wordMap = useMemo(() => {
     const map = {};
     allWords.forEach((w) => {
-      map[normalizeWord(w.word)] = w.meaning;
+      map[normalizeWord(w.word)] = w;
     });
     return map;
   }, [allWords]);
@@ -27,7 +25,7 @@ export function ClickableExample({ example, allWords }) {
     }));
   }, [example]);
 
-  const selectedMeaning = selected ? wordMap[normalizeWord(selected)] : null;
+  const selectedWord = selected ? wordMap[normalizeWord(selected)] : null;
 
   return (
     <>
@@ -52,7 +50,7 @@ export function ClickableExample({ example, allWords }) {
       {selected && (
         <WordTooltip
           word={selected}
-          meaning={selectedMeaning}
+          wordData={selectedWord}
           onClose={() => setSelected(null)}
         />
       )}

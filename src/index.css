@@ -538,11 +538,31 @@ body {
   color: var(--text);
 }
 
+.word-tooltip-phonetic {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
 .word-tooltip-meaning {
   color: var(--text);
   font-size: 14px;
-  margin: 0;
+  margin: 0 0 12px;
   line-height: 1.5;
+}
+
+.word-tooltip-example {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.word-tooltip-extra {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 4px;
 }
 
 .word-tooltip-missing {
