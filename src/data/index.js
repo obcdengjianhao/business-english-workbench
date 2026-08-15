@@ -1,0 +1,15 @@
+export { financeWords } from './words_finance.js';
+export { projectWords } from './words_project.js';
+export { salesWords } from './words_sales.js';
+export { legalWords } from './words_legal.js';
+export { meetingWords } from './words_meeting.js';
+export { managementWords } from './words_management.js';
+export { marketingWords } from './words_marketing.js';
+export { hrWords } from './words_hr.js';
+export { corporateWords } from './words_corporate.js';
+export { operationsWords } from './words_operations.js';
+export { negotiationWords } from './words_negotiation.js';
+export { foodWords } from './words_food.js';
+export { communicationWords } from './words_communication.js';
+export { tradeWords } from './words_trade.js';
+export { businessWords } from './words_business.js';

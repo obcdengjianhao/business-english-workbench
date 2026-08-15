@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { defaultVocabulary } from './data/vocabulary';
+import { loadDefaultVocabulary } from './data/vocabulary';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { getNextReviewDate, isDueForReview } from './utils/ebinhause';
 import { useSwipe } from './hooks/useSwipe';
@@ -54,6 +54,15 @@ export default function App() {
   const [speechRate, setSpeechRate] = useLocalStorage('bew_speech_rate', 0.9);
   const [showOnboarding, setShowOnboarding] = useLocalStorage('bew_onboarding', true);
   const [streak, setStreak] = useLocalStorage('bew_streak', { current: 0, max: 0, lastDate: null });
+  const [defaultWords, setDefaultWords] = useState([]);
+  const [loadingWords, setLoadingWords] = useState(true);
+
+  useEffect(() => {
+    loadDefaultVocabulary().then((words) => {
+      setDefaultWords(words);
+      setLoadingWords(false);
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -99,14 +108,14 @@ export default function App() {
   }, [activeTab, showOnboarding]);
 
   const allWords = useMemo(() => {
-    const base = [...defaultVocabulary];
+    const base = [...defaultWords];
     customWords.forEach((cw) => {
       if (!base.find((w) => w.word === cw.word)) {
         base.push(cw);
       }
     });
     return base.sort((a, b) => a.frequency - b.frequency || a.id - b.id);
-  }, [customWords]);
+  }, [defaultWords, customWords]);
 
   const dueToday = useMemo(() => {
     return allWords.filter((w) => {
@@ -223,7 +232,14 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        {activeTab === 'dashboard' && (
+        {loadingWords ? (
+          <div className="empty-state">
+            <h2>加载中...</h2>
+            <p>正在加载词汇数据</p>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'dashboard' && (
           <Dashboard
             stats={stats}
             dueToday={dueToday}
@@ -313,6 +329,8 @@ export default function App() {
             speechRate={speechRate}
             setSpeechRate={setSpeechRate}
           />
+        )}
+          </>
         )}
       </main>
 
