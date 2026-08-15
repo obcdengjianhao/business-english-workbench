@@ -5,7 +5,7 @@ function normalizeWord(word) {
   return word.toLowerCase().replace(/[^a-z]/g, '');
 }
 
-export function ClickableExample({ example, allWords }) {
+export function ClickableExample({ example, exampleCn, allWords }) {
   const [selected, setSelected] = useState(null);
 
   const wordMap = useMemo(() => {
@@ -27,6 +27,15 @@ export function ClickableExample({ example, allWords }) {
 
   const selectedWord = selected ? wordMap[normalizeWord(selected)] : null;
 
+  const cnTokens = useMemo(() => {
+    if (!exampleCn) return [];
+    return exampleCn.split(/([\u4e00-\u9fa5]+)/).map((token, index) => ({
+      text: token,
+      key: `${token}-${index}`,
+      isChinese: /[\u4e00-\u9fa5]/.test(token),
+    }));
+  }, [exampleCn]);
+
   return (
     <>
       <p className="example">
@@ -47,6 +56,26 @@ export function ClickableExample({ example, allWords }) {
           )
         )}
       </p>
+      {exampleCn && (
+        <p className="example-cn">
+          {cnTokens.map((token) =>
+            token.isChinese ? (
+              <span
+                key={token.key}
+                className="example-word-cn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelected(token.text);
+                }}
+              >
+                {token.text}
+              </span>
+            ) : (
+              <span key={token.key}>{token.text}</span>
+            )
+          )}
+        </p>
+      )}
       {selected && (
         <WordTooltip
           word={selected}

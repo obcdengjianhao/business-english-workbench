@@ -9,6 +9,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { StatsView } from './components/StatsView';
 import { Onboarding } from './components/Onboarding';
 import { ClickableExample } from './components/ClickableExample';
+import { Celebration } from './components/Celebration';
 import './index.css';
 
 const TABS = [
@@ -19,6 +20,14 @@ const TABS = [
   { key: 'list', label: '列表' },
   { key: 'settings', label: '设置' },
 ];
+
+function getStreakLabel(streak) {
+  if (streak.current >= 30) return '学习达人';
+  if (streak.current >= 14) return '坚持不懈';
+  if (streak.current >= 7) return '一周连胜';
+  if (streak.current >= 3) return '渐入佳境';
+  return '新手起步';
+}
 
 function formatDate(iso) {
   if (!iso) return '-';
@@ -44,10 +53,24 @@ export default function App() {
   const [autoSpeak, setAutoSpeak] = useLocalStorage('bew_auto_speak', false);
   const [speechRate, setSpeechRate] = useLocalStorage('bew_speech_rate', 0.9);
   const [showOnboarding, setShowOnboarding] = useLocalStorage('bew_onboarding', true);
+  const [streak, setStreak] = useLocalStorage('bew_streak', { current: 0, max: 0, lastDate: null });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    if (streak.lastDate === today) return;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (streak.lastDate === yesterdayStr) {
+      setStreak((s) => ({ ...s, lastDate: today, current: s.current + 1, max: Math.max(s.max, s.current + 1) }));
+    } else {
+      setStreak((s) => ({ ...s, lastDate: today, current: 1, max: Math.max(s.max, 1) }));
+    }
+  }, [streak.lastDate, setStreak]);
 
   useEffect(() => {
     const handleGoTab = (e) => setActiveTab(e.detail);
@@ -115,8 +138,10 @@ export default function App() {
       notebook: notebook.length,
       dueToday: dueToday.length,
       mastered: Object.values(progress).filter((p) => p.level >= 4).length,
+      streak: streak.current,
+      maxStreak: streak.max,
     };
-  }, [allWords, progress, notebook, dueToday]);
+  }, [allWords, progress, notebook, dueToday, streak]);
 
   const markLearned = (word, quality = 2) => {
     setProgress((prev) => {
@@ -124,17 +149,23 @@ export default function App() {
       const q = typeof quality === 'string' ? (quality === 'again' ? 0 : 2) : quality;
       const nextLevel = q < 2 ? Math.max(0, (p.level || 0) - 1) : Math.min((p.level || 0) + 1, 12);
       const nextEase = q === 3 ? (p.ease || 2.5) + 0.15 : q === 0 ? Math.max(1.3, (p.ease || 2.5) - 0.2) : (p.ease || 2.5);
+      const mistakeCount = q < 2 ? ((p.mistakeCount || 0) + 1) : (p.mistakeCount || 0);
       return {
         ...prev,
         [word]: {
           ...p,
           level: nextLevel,
           ease: nextEase,
+          mistakeCount,
           learnedAt: new Date().toISOString(),
           nextReviewAt: getNextReviewDate(nextLevel, nextEase, q),
         },
       };
     });
+    const today = new Date().toISOString().split('T')[0];
+    if (streak.lastDate !== today) {
+      setStreak((s) => ({ ...s, lastDate: today, current: s.lastDate ? s.current + 1 : 1, max: Math.max(s.max, s.lastDate ? s.current + 1 : 1) }));
+    }
   };
 
   const addToNotebook = (word) => {
@@ -200,6 +231,7 @@ export default function App() {
             setListFilter={setListFilter}
             progress={progress}
             allWords={allWords}
+            streak={streak}
           />
         )}
           {activeTab === 'learn' && (
@@ -299,7 +331,7 @@ export default function App() {
   );
 }
 
-function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords }) {
+function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords, streak }) {
   const goToList = (filter) => {
     setListFilter(filter);
     setTab('list');
@@ -328,7 +360,21 @@ function Dashboard({ stats, dueToday, setTab, setListFilter, progress, allWords 
           <span className="stat-number">{stats.dueToday}</span>
           <span className="stat-label">今日待复习</span>
         </div>
+        <div className="stat-card">
+          <span className="stat-number">{stats.streak}</span>
+          <span className="stat-label">连续学习</span>
+        </div>
       </section>
+
+      {streak.current > 0 && (
+        <section className="streak-banner">
+          <span className="streak-icon">🔥</span>
+          <div>
+            <strong>连续学习 {streak.current} 天</strong>
+            <span>{getStreakLabel(streak)}</span>
+          </div>
+        </section>
+      )}
 
       <section className="learning-path">
         <h2>今日学习路径</h2>
@@ -394,6 +440,8 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
   const [flipped, setFlipped] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [tagFilter, setTagFilter] = useState('');
 
   useEffect(() => {
     const handleFlip = () => setFlipped((f) => !f);
@@ -410,9 +458,15 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
     };
   }, []);
 
+  const allTags = useMemo(() => {
+    const set = new Set();
+    words.forEach((w) => w.tags?.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [words]);
+
   const unlearned = useMemo(
-    () => words.filter((w) => !progress[w.word]?.learnedAt),
-    [words, progress]
+    () => words.filter((w) => !progress[w.word]?.learnedAt && (!tagFilter || w.tags?.includes(tagFilter))),
+    [words, progress, tagFilter]
   );
 
   const learnedCount = words.length - unlearned.length;
@@ -420,22 +474,36 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
 
   if (unlearned.length === 0 || showSummary) {
     return (
-      <div className="empty-state">
-        <h2>太棒了！</h2>
-        <p>你已经学完了当前所有单词。</p>
-        <p className="progress-text">
-          学习进度：{learnedCount}/{words.length} ({progressPercent}%)
-        </p>
-        <div className="actions">
-          <button onClick={() => setShowSummary(false)}>再学一遍</button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'review' }))}>
-            去复习
-          </button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'notebook' }))}>
-            去单词本
-          </button>
+      <>
+        <div className="empty-state">
+          <h2>太棒了！</h2>
+          <p>你已经学完了当前所有单词。</p>
+          <p className="progress-text">
+            学习进度：{learnedCount}/{words.length} ({progressPercent}%)
+          </p>
+          <div className="actions">
+            <button onClick={() => setShowSummary(false)}>再学一遍</button>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'review' }))}>
+              去复习
+            </button>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'notebook' }))}>
+              去单词本
+            </button>
+          </div>
         </div>
-      </div>
+        <Celebration
+          title="学习完成！"
+          subtitle={`本次学习了 ${words.length} 个单词`}
+          stats={[
+            { value: words.length, label: '学习单词' },
+            { value: `${progressPercent}%`, label: '完成度' },
+          ]}
+          actions={[
+            { label: '再学一遍', onClick: () => setShowSummary(false), primary: true },
+            { label: '去复习', onClick: () => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'review' })) },
+          ]}
+        />
+      </>
     );
   }
 
@@ -484,6 +552,14 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
       <p className="progress-text">
         学习进度：{learnedCount}/{words.length} ({progressPercent}%) · 剩余未学：{unlearned.length}
       </p>
+      <div className="learn-tag-filter">
+        <select value={tagFilter} onChange={(e) => { setTagFilter(e.target.value); setIndex(0); }}>
+          <option value="">全部主题</option>
+          {allTags.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+      </div>
 
       <div className={`card ${flipped ? 'flipped' : ''}`} onClick={() => {
         setFlipped(!flipped);
@@ -501,8 +577,7 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <ClickableExample example={current.example} allWords={allWords} />
-          <p className="example-cn">{current.exampleCn}</p>
+          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} />
           <div className="tags">
             {current.tags?.map((t) => (
               <span key={t} className="tag">
@@ -591,6 +666,7 @@ function NotebookView({ notebook, onRemove, onAddCustom, onStudyNotebook }) {
 function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate, progress, allWords }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     const handleFlip = () => setFlipped((f) => !f);
@@ -613,6 +689,29 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
         <h2>今日无复习任务</h2>
         <p>先去学习新词，系统会根据艾宾浩斯曲线安排复习。</p>
       </div>
+    );
+  }
+
+  if (index >= dueWords.length || showCelebration) {
+    return (
+      <>
+        <div className="empty-state">
+          <h2>复习完成！</h2>
+          <p>你已经完成了今日所有复习任务。</p>
+        </div>
+        <Celebration
+          title="复习完成！"
+          subtitle={`今日复习了 ${dueWords.length} 个单词`}
+          stats={[
+            { value: dueWords.length, label: '复习单词' },
+            { value: dueWords.filter((w) => progress[w.word]?.level >= 4).length, label: '已熟练' },
+          ]}
+          actions={[
+            { label: '再复习一遍', onClick: () => setShowCelebration(false), primary: true },
+            { label: '去学习', onClick: () => window.dispatchEvent(new CustomEvent('bew-go-tab', { detail: 'learn' })) },
+          ]}
+        />
+      </>
     );
   }
 
@@ -650,8 +749,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <ClickableExample example={current.example} allWords={allWords} />
-          <p className="example-cn">{current.exampleCn}</p>
+          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} />
           <p className="review-date">下次复习：{formatDate(progress[current.word]?.nextReviewAt)}</p>
         </div>
       </div>
@@ -669,7 +767,11 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onAddToNotebook(current);
             setFlipped(false);
             setTimeout(() => {
-              setIndex((i) => (i + 1) % dueWords.length);
+              if (index + 1 >= dueWords.length) {
+                setShowCelebration(true);
+              } else {
+                setIndex((i) => i + 1);
+              }
             }, 200);
           }}
         >
@@ -682,7 +784,11 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onAddToNotebook(current);
             setFlipped(false);
             setTimeout(() => {
-              setIndex((i) => (i + 1) % dueWords.length);
+              if (index + 1 >= dueWords.length) {
+                setShowCelebration(true);
+              } else {
+                setIndex((i) => i + 1);
+              }
             }, 200);
           }}
         >
@@ -694,7 +800,11 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onReview(current.word, 2);
             setFlipped(false);
             setTimeout(() => {
-              setIndex((i) => (i + 1) % dueWords.length);
+              if (index + 1 >= dueWords.length) {
+                setShowCelebration(true);
+              } else {
+                setIndex((i) => i + 1);
+              }
             }, 200);
           }}
         >
@@ -706,7 +816,11 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
             onReview(current.word, 3);
             setFlipped(false);
             setTimeout(() => {
-              setIndex((i) => (i + 1) % dueWords.length);
+              if (index + 1 >= dueWords.length) {
+                setShowCelebration(true);
+              } else {
+                setIndex((i) => i + 1);
+              }
             }, 200);
           }}
         >

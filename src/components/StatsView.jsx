@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-export function StatsView({ progress, totalWords }) {
+export function StatsView({ progress, totalWords, allWords }) {
   const last7Days = useMemo(() => {
     const days = [];
     const today = new Date();
@@ -184,6 +184,41 @@ export function StatsView({ progress, totalWords }) {
           })}
         </div>
       </section>
+
+      <MistakeRank progress={progress} allWords={allWords} />
     </div>
+  );
+}
+
+function MistakeRank({ progress, allWords }) {
+  const mistakes = useMemo(() => {
+    return Object.entries(progress)
+      .filter(([, p]) => (p.mistakeCount || 0) > 0)
+      .map(([word, p]) => {
+        const w = allWords.find((aw) => aw.word === word);
+        return { word, count: p.mistakeCount || 0, meaning: w?.meaning || '' };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [progress, allWords]);
+
+  if (mistakes.length === 0) return null;
+
+  return (
+    <section className="chart-section">
+      <h3>易错词排行榜</h3>
+      <ul className="mistake-rank">
+        {mistakes.map((m, i) => (
+          <li key={m.word} className="mistake-item">
+            <span className="mistake-rank-number">{i + 1}</span>
+            <div className="mistake-info">
+              <strong>{m.word}</strong>
+              <span>{m.meaning}</span>
+            </div>
+            <span className="mistake-count">错 {m.count} 次</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
