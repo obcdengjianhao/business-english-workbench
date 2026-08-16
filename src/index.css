@@ -463,6 +463,16 @@ body {
   transform: rotateY(0deg);
 }
 
+.card-back {
+  transform: rotateY(180deg);
+  background: var(--surface);
+  visibility: hidden;
+}
+
+.card.flipped .card-back {
+  visibility: visible;
+}
+
 .card h2 {
   font-size: 34px;
   margin: 0 0 8px;

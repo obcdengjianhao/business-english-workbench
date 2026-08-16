@@ -526,19 +526,25 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
   }
 
   const current = unlearned[index % unlearned.length];
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const goToNext = () => {
+    setIndex((i) => (i + 1) % unlearned.length);
+    setIsTransitioning(false);
+  };
 
   const handleNext = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
     setFlipped(false);
-    setTimeout(() => {
-      setIndex((i) => (i + 1) % unlearned.length);
-    }, 200);
+    setTimeout(goToNext, 300);
   };
 
   const handleSkip = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
     setFlipped(false);
-    setTimeout(() => {
-      setIndex((i) => (i + 1) % unlearned.length);
-    }, 200);
+    setTimeout(goToNext, 300);
   };
 
   useSwipe({
@@ -547,16 +553,16 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
   });
 
   const handleRate = (quality) => {
+    if (isTransitioning) return;
     const labels = { 0: '已加入单词本', 1: '已加入单词本', 2: '已掌握', 3: '已熟练' };
     const colors = { 0: '#ef4444', 1: '#f59e0b', 2: '#22c55e', 3: '#3b82f6' };
     setFeedback({ text: labels[quality], color: colors[quality] });
     setTimeout(() => setFeedback(null), 800);
     onLearned(current.word, quality);
     if (quality < 2) onAddToNotebook(current);
+    setIsTransitioning(true);
     setFlipped(false);
-    setTimeout(() => {
-      setIndex((i) => (i + 1) % unlearned.length);
-    }, 200);
+    setTimeout(goToNext, 300);
   };
 
   return (
@@ -734,13 +740,19 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
   }
 
   const current = dueWords[index % dueWords.length];
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const goToNext = () => {
+    setIndex((i) => (i + 1) % dueWords.length);
+    setIsTransitioning(false);
+  };
 
   const handleNext = (quality) => {
+    if (isTransitioning) return;
     onReview(current.word, quality);
+    setIsTransitioning(true);
     setFlipped(false);
-    setTimeout(() => {
-      setIndex((i) => (i + 1) % dueWords.length);
-    }, 200);
+    setTimeout(goToNext, 300);
   };
 
   useSwipe({
@@ -781,16 +793,20 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
         <button
           className="btn-again"
           onClick={() => {
+            if (isTransitioning) return;
             onReview(current.word, 0);
             onAddToNotebook(current);
+            setIsTransitioning(true);
             setFlipped(false);
             setTimeout(() => {
               if (index + 1 >= dueWords.length) {
                 setShowCelebration(true);
+                setIsTransitioning(false);
               } else {
                 setIndex((i) => i + 1);
+                setIsTransitioning(false);
               }
-            }, 200);
+            }, 300);
           }}
         >
           忘记
@@ -798,16 +814,20 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
         <button
           className="btn-hard"
           onClick={() => {
+            if (isTransitioning) return;
             onReview(current.word, 1);
             onAddToNotebook(current);
+            setIsTransitioning(true);
             setFlipped(false);
             setTimeout(() => {
               if (index + 1 >= dueWords.length) {
                 setShowCelebration(true);
+                setIsTransitioning(false);
               } else {
                 setIndex((i) => i + 1);
+                setIsTransitioning(false);
               }
-            }, 200);
+            }, 300);
           }}
         >
           模糊
@@ -815,15 +835,19 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
         <button
           className="btn-good"
           onClick={() => {
+            if (isTransitioning) return;
             onReview(current.word, 2);
+            setIsTransitioning(true);
             setFlipped(false);
             setTimeout(() => {
               if (index + 1 >= dueWords.length) {
                 setShowCelebration(true);
+                setIsTransitioning(false);
               } else {
                 setIndex((i) => i + 1);
+                setIsTransitioning(false);
               }
-            }, 200);
+            }, 300);
           }}
         >
           记得
@@ -831,15 +855,19 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
         <button
           className="btn-easy"
           onClick={() => {
+            if (isTransitioning) return;
             onReview(current.word, 3);
+            setIsTransitioning(true);
             setFlipped(false);
             setTimeout(() => {
               if (index + 1 >= dueWords.length) {
                 setShowCelebration(true);
+                setIsTransitioning(false);
               } else {
                 setIndex((i) => i + 1);
+                setIsTransitioning(false);
               }
-            }, 200);
+            }, 300);
           }}
         >
           熟练
