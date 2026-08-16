@@ -623,6 +623,24 @@ body {
   margin: 0;
 }
 
+.word-tooltip-add {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.word-tooltip-add:hover {
+  background: var(--primary-dark);
+}
+
 .tags {
   margin-top: 12px;
   display: flex;

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 
-export function WordTooltip({ word, wordData, onClose }) {
+export function WordTooltip({ word, wordData, onClose, onAddToNotebook }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -12,6 +12,13 @@ export function WordTooltip({ word, wordData, onClose }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [onClose]);
+
+  const handleAdd = () => {
+    if (wordData && onAddToNotebook) {
+      onAddToNotebook(wordData);
+    }
+    onClose();
+  };
 
   return (
     <div className="word-tooltip-overlay" onClick={onClose}>
@@ -32,6 +39,11 @@ export function WordTooltip({ word, wordData, onClose }) {
             )}
             {wordData.antonyms && (
               <p className="word-tooltip-extra">反义：{wordData.antonyms}</p>
+            )}
+            {onAddToNotebook && (
+              <button className="word-tooltip-add" onClick={handleAdd}>
+                ⭐ 加入单词本
+              </button>
             )}
           </>
         ) : (

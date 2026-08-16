@@ -595,7 +595,7 @@ function LearnView({ words, progress, onLearned, onAddToNotebook, autoSpeak, spe
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} />
+          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} onAddToNotebook={onAddToNotebook} />
           <div className="tags">
             {current.tags?.map((t) => (
               <span key={t} className="tag">
@@ -767,7 +767,7 @@ function ReviewView({ dueWords, onReview, onAddToNotebook, autoSpeak, speechRate
           </p>
           {current.synonyms && <p className="extra">同义：{current.synonyms}</p>}
           {current.antonyms && <p className="extra">反义：{current.antonyms}</p>}
-          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} />
+          <ClickableExample example={current.example} exampleCn={current.exampleCn} allWords={allWords} onAddToNotebook={onAddToNotebook} />
           <p className="review-date">下次复习：{formatDate(progress[current.word]?.nextReviewAt)}</p>
         </div>
       </div>

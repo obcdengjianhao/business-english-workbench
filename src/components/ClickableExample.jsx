@@ -5,7 +5,7 @@ function normalizeWord(word) {
   return word.toLowerCase().replace(/[^a-z]/g, '');
 }
 
-export function ClickableExample({ example, exampleCn, allWords }) {
+export function ClickableExample({ example, exampleCn, allWords, onAddToNotebook }) {
   const [selected, setSelected] = useState(null);
 
   const wordMap = useMemo(() => {
@@ -81,6 +81,7 @@ export function ClickableExample({ example, exampleCn, allWords }) {
           word={selected}
           wordData={selectedWord}
           onClose={() => setSelected(null)}
+          onAddToNotebook={onAddToNotebook}
         />
       )}
     </>
